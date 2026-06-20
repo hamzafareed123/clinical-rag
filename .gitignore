@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.py[cod].*
+*.egg-info/
+*.eggs/
+.eggs/
+*.manifest
+*.spec
+*.log
+*.pot
+*.pyc
+*.pkl
+*.sqlite3
+*.db
+*.DS_Store
+
+# Virtual environment
+.venv/
+.venv_old
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment files
+.env
+
+
+chroma_db
+chroma_store
