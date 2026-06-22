@@ -14,6 +14,7 @@ llm = ChatGroq(
 
 class Question(BaseModel):
     query: str
+    session_id: str
 
 
 class MedicalAnswer(BaseModel):
@@ -28,13 +29,20 @@ structured_llm = llm.with_structured_output(MedicalAnswer)
 @router.post("")
 def user_query(request: Question):
 
-    docs = retrieve_docs(request.query)
+    collection_name = f"session_{request.session_id}"
+    print(collection_name)
+
+    docs = retrieve_docs(request.query, collection_name)
+    print(docs)
+
     context = "\n\n".join(
         [
             f"[{doc.metadata['source']} - Page {doc.metadata.get('page_label', 'N/A')}] {doc.page_content}"
             for doc in docs
         ]
     )
+
+    print("context", context)
 
     prompt = f"""
         You are a medical assistant. Answer ONLY using the context below.
@@ -46,5 +54,11 @@ def user_query(request: Question):
           Question: {request.query}?
             """
 
-    result = structured_llm.invoke(prompt)
-    return result
+    answer = structured_llm.invoke(prompt)
+
+    return {
+        "answer": answer.answer,
+        "score": answer.score,
+        "citations": answer.citations,
+        "session Id": request.session_id,
+    }
