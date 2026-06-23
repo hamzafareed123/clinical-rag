@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from langchain_groq import ChatGroq
 from src.core.config import settings
 from src.services.retriever import retrieve_docs
+from src.services.chat_history import save_message, get_history
 
 router = APIRouter()
 
@@ -32,6 +33,11 @@ def user_query(request: Question):
     collection_name = f"session_{request.session_id}"
     print(collection_name)
 
+    save_message(collection_name, "user", request.query)
+
+    history = get_history(collection_name)
+    history_text = "\n".join([f"{msg.role}:{msg.content}" for msg in history])
+
     docs = retrieve_docs(request.query, collection_name)
     print(docs)
 
@@ -45,16 +51,26 @@ def user_query(request: Question):
     print("context", context)
 
     prompt = f"""
-        You are a medical assistant. Answer ONLY using the context below.
-        If unsure, lower your confidence score.
-
-          Context:
-          {context}
-
-          Question: {request.query}?
+            You are a helpful medical assistant.
+            Rules:
+            - Answer only from the provided context.
+            - If the answer is not in the context, clearly say you don't know.
+            - Use the conversation history when needed.
+            - Include citations.
+            
+            Context:
+            {context}
+            
+            Conversation History:
+            {history_text}
+            
+            Current Question:
+            {request.query}
             """
 
     answer = structured_llm.invoke(prompt)
+
+    save_message(collection_name, "assistant", answer.answer)
 
     return {
         "answer": answer.answer,
