@@ -34,3 +34,6 @@ uploads
 
 chroma_db
 chroma_store
+
+public
+node_modules
